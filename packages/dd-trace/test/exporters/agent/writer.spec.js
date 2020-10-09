@@ -2,53 +2,19 @@
 
 const URL = require('url-parse')
 
-const id = require('../../../src/id')
-
 function describeWriter (protocolVersion) {
   let Writer
   let writer
-  let trace
   let span
   let platform
   let response
-  let format
-  let encodedLength
-  let encode
+  let encoder
   let url
   let prioritySampler
   let log
-  let tracer
-  let scope
 
   beforeEach((done) => {
-    scope = {
-      _wipe: sinon.stub()
-    }
-
-    tracer = {
-      scope: sinon.stub().returns(scope)
-    }
-
-    trace = {
-      started: [],
-      finished: []
-    }
-
-    span = {
-      tracer: sinon.stub().returns(tracer),
-      context: sinon.stub().returns({
-        _trace: trace,
-        _sampling: {},
-        _tags: {
-          trace_id: id('1'),
-          span_id: id('2'),
-          parent_id: id('0'),
-          start: 3,
-          duration: 4
-        },
-        _traceFlags: {}
-      })
-    }
+    span = 'formatted'
 
     response = JSON.stringify({
       rate_by_service: {
@@ -66,16 +32,8 @@ function describeWriter (protocolVersion) {
       }
     }
 
-    format = sinon.stub().withArgs(span).returns('formatted')
-
-    encodedLength = 12
-    encode = {
-      encode: function (buf) {
-        buf[0] = 101
-        return encodedLength
-      },
-      makePayload: x => x,
-      init: () => {}
+    encoder = {
+      encode: sinon.stub().withArgs(['formatted']).returns('encoded')
     }
 
     url = {
@@ -93,9 +51,7 @@ function describeWriter (protocolVersion) {
     }
 
     Writer = proxyquire('../src/exporters/agent/writer', {
-      '../../format': format,
-      '../../encode/0.4': encode,
-      '../../encode/0.5': encode,
+      '../../encode/encoder': encoder,
       '../../platform': platform,
       '../../../lib/version': 'tracerVersion',
       '../../log': log
@@ -118,8 +74,7 @@ function describeWriter (protocolVersion) {
     it('should append a trace', () => {
       writer.append([span])
 
-      const expectedTraceLen = 12
-      expect(writer._offset).to.equal(expectedTraceLen)
+      expect(writer._buffers).to.deep.include('encoded')
     })
   })
 

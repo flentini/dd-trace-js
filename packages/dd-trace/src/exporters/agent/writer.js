@@ -4,7 +4,6 @@ const platform = require('../../platform')
 const log = require('../../log')
 const tracerVersion = require('../../../lib/version')
 
-const MAX_SIZE = 8 * 1024 * 1024 // 8MB
 const METRIC_PREFIX = 'datadog.tracer.node.exporter.agent'
 
 class Writer {
@@ -62,9 +61,10 @@ class Writer {
   }
 
   _encode (trace) {
-    const offset = this._offset
+    const buffer = this._encoderForVersion.encode(trace)
+
     try {
-      this._offset = this._encoderForVersion.encode(this._buffer, this._offset, trace, this)
+      this._buffers.push(buffer)
       this._count++
     } catch (e) {
       if (e instanceof RangeError) {
@@ -76,13 +76,12 @@ class Writer {
 
     log.debug(() => [
       'Added encoded trace to buffer:',
-      this._buffer.slice(offset, this._offset).toString('hex').match(/../g).join(' ')
+      buffer.toString('hex').match(/../g).join(' ')
     ].join(' '))
   }
 
   _reset () {
-    this._buffer = Buffer.allocUnsafe(MAX_SIZE)
-    this._offset = 5 // we'll use these first bytes to hold an array prefix
+    this._buffers = []
     this._count = 0
 
     this._encoderForVersion.init()
@@ -90,8 +89,7 @@ class Writer {
 
   flush () {
     if (this._count > 0) {
-      const traceData = platform.msgpack.prefix(this._buffer.slice(0, this._offset), this._count)
-      const data = this._encoderForVersion.makePayload(traceData)
+      const data = platform.msgpack.prefix(this._buffers)
 
       this._sendPayload(data, this._count)
 
@@ -108,9 +106,9 @@ function setHeader (headers, key, value) {
 
 function getEncoder (writer) {
   if (writer._protocolVersion === '0.5') {
-    return require('../../encode/0.5')
+    return require('../../encode/encoder')
   } else {
-    return require('../../encode/0.4')
+    return require('../../encode/encoder')
   }
 }
 

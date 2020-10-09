@@ -16,7 +16,7 @@ const Writer = proxyquire('../packages/dd-trace/src/exporters/agent/writer', {
 })
 const Sampler = require('../packages/dd-trace/src/sampler')
 const format = require('../packages/dd-trace/src/format')
-const { encode } = require('../packages/dd-trace/src/encode/0.4') // TODO also v0.5
+const { encode } = require('../packages/dd-trace/src/encode/encoder') // TODO also v0.5
 const config = new Config({ service: 'benchmark' })
 const id = require('../packages/dd-trace/src/id')
 const Histogram = require('../packages/dd-trace/src/histogram')
@@ -33,8 +33,6 @@ let sampler
 
 const spanStub = require('./stubs/span')
 const span = format(spanStub)
-
-const buffer = Buffer.alloc(10 * 1024 * 1024)
 
 suite
   .add('DatadogTracer#startSpan', {
@@ -95,7 +93,7 @@ suite
   })
   .add('encode', {
     fn () {
-      encode(buffer, 0, [span], {})
+      encode([span])
     }
   })
   .add('id', {

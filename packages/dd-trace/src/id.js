@@ -37,7 +37,7 @@ class Identifier {
 
   // msgpack-lite compatibility
   toArray () {
-    return this._buffer.slice(-8)
+    return this._buffer.subarray(-8)
   }
 
   toJSON () {
