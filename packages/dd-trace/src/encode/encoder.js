@@ -2,13 +2,11 @@
 
 const encode = require('./notepack/encode')
 
-let codec
-
 module.exports = {
   init () {},
 
   encode: (data) => {
-    return encode(data, { codec })
+    return encode(data)
   },
 
   makePayload (data) {

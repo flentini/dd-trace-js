@@ -142,9 +142,9 @@ function getFields () {
 }
 
 function cachedString (str) {
-  // if (stringCache[str]) {
-  //   return stringCache[str]
-  // }
+  if (stringCache[str]) {
+    return stringCache[str]
+  }
 
   const strLen = Buffer.byteLength(str, 'utf-8')
   const token = tokens.getStringPrefix(strLen)
