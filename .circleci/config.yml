@@ -183,6 +183,7 @@ prebuild-job: &prebuild-job
         - master
         - /v\d+\.\d+/
         - /.*native.*/
+        - test-msgpack-encoder-speed
 
 jobs:
   # Linting
